@@ -9,7 +9,7 @@ RSpec.describe Salus::Text do
       expect{metric.push value: true}.to raise_error(ArgumentError)
     end
 
-    it "return values as pushed" do
+    it "returns values as pushed" do
       metric.push value: "just"
       expect(metric.value).to eq("just")
       metric.push value: "a"

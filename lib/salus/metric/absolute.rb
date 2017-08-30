@@ -6,6 +6,8 @@ module Salus
 
       if @values.length < STORAGE_DEPTH
         return
+      elsif @values[0].expired?(@values[1].timestamp)
+        return
       elsif !@values[1].value.is_a?(Numeric)
         return
       end

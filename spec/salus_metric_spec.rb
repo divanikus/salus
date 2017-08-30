@@ -55,7 +55,7 @@ RSpec.describe Salus::Metric do
 
     it "mutes block errors" do
       metric.push do
-        10 / 0
+        10 / nil
       end
       expect(metric.value).to eq(nil)
     end
