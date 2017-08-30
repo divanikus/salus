@@ -19,18 +19,6 @@ module Salus
     STORAGE_DEPTH = 2
 
     Value = Struct.new(:value, :timestamp, :ttl) do
-      def to_s
-        value.to_s
-      end
-
-      def to_f
-        value.to_f
-      end
-
-      def to_i
-        value.to_i
-      end
-
       def expired?(ts=nil)
         return false if ttl.nil?
         ts ||= Time.now.to_f
@@ -93,8 +81,7 @@ module Salus
       if @values.empty?
         true
       else
-        v = @values.last
-        v.expired?(ts)
+        @values.last.expired?(ts)
       end
     end
 
