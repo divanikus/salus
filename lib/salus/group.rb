@@ -9,8 +9,8 @@ require "salus/metric/text"
 module Salus
   class Group
     extend Forwardable
-    METRIC_TYPES = [:absolute, :counter, :derive, :gauge, :text]
-    def_delegators :@metrics, :[], :keys, :key?, :values, :value_at, :fetch, :length, :delete, :each, :empty?
+    def_delegators :@metrics, :key?, :values_at, :fetch, :length, :delete, :empty?
+    attr_reader :title
 
     def initialize(title, &block)
       @title   = title
@@ -18,34 +18,54 @@ module Salus
       @proc    = block
     end
 
-    def method_missing(m, *args, &block)
-      raise "Unknown method" unless METRIC_TYPES.include?(m)
+    Metric.descendants.each do |m|
+      sym = m.name.split('::').last.downcase.to_sym
+      define_method(sym) do |*args, &blk|
+        title = args.select { |x| x.is_a?(String) }.first
+        raise ArgumentError, "Metric needs a name!" if title.nil?
 
-      title = args.select { |x| x.is_a?(String) }.first
-      raise "Metric needs a name!" if title.nil?
+        unless @metrics.key?(title)
+          @metrics[title] = m.new
+        end
 
-      unless @metrics.key?(title)
-        @metrics[title] = Object.const_get(m.capitalize).new
+        @metrics[title].push(*args, &blk)
       end
+    end
 
-      @metrics[title].push(*args, &block)
+    def [](key)
+      value(key)
     end
 
     def value(title)
       @metrics.key?(title) ? @metrics[title].value : nil
     end
 
-    def tick
-      instance_eval(&@proc)
+    def keys(allow_mute=false)
+      if allow_mute
+        @metrics.keys
+      else
+        @metrics.keys.select { |x| !@metrics[x].mute? }
+      end
     end
 
-    def run(&block)
-      tick
-      @metrics.each do |k, m|
-        v = m.value
-        t = m.timestamp
-        yield(@title, k, t, v) unless m.mute?
+    def values(allow_mute=false)
+      if allow_mute
+        @metrics.values
+      else
+        @metrics.values.select { |x| !x.mute? }
       end
+    end
+
+    def each(allow_mute=false, &block)
+      if allow_mute
+        @metrics.each(&block)
+      else
+        @metrics.select { |k, v| !v.mute? }.each(&block)
+      end
+    end
+
+    def tick
+      instance_eval(&@proc)
     end
   end
 end

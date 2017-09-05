@@ -26,6 +26,15 @@ module Salus
       end
     end
 
+    def self.inherited(subclass)
+      @@descendants ||= []
+      @@descendants << subclass
+    end
+
+    def self.descendants
+      @@descendants || []
+    end
+
     def initialize
       @values = Fifo.new(STORAGE_DEPTH)
       @opts   = {}
