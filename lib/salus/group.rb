@@ -9,12 +9,12 @@ require "salus/metric/text"
 module Salus
   class Group
     extend Forwardable
-    def_delegators :@metrics, :key?, :values_at, :fetch, :length, :delete, :empty?
+    def_delegators :@metrics, :[], :key?, :values_at, :fetch, :length, :delete, :empty?
     attr_reader :title
 
-    def initialize(title, &block)
-      @title   = title
+    def initialize(&block)
       @metrics = {}
+      @groups  = {}
       @proc    = block
     end
 
@@ -30,10 +30,6 @@ module Salus
 
         @metrics[title].push(*args, &blk)
       end
-    end
-
-    def [](key)
-      value(key)
     end
 
     def value(title)

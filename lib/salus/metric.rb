@@ -1,7 +1,7 @@
 module Salus
   class Fifo
     extend Forwardable
-    def_delegators :@data, :[], :each, :length, :empty?, :clear, :last, :first, :hash
+    def_delegators :@data, :[], :each, :length, :empty?, :clear, :last, :first, :hash, :map
 
     def initialize(maxlen)
       @maxlen = maxlen
@@ -77,12 +77,12 @@ module Salus
     end
 
     def timestamp
-      calc if needs_update?
+      calc if @needs_update
       @last_calced_ts
     end
 
     def value
-      calc if needs_update?
+      calc if @needs_update
       @last_calced_value
     end
 
@@ -92,6 +92,32 @@ module Salus
       else
         @values.last.expired?(ts)
       end
+    end
+
+    def load(data)
+      return if data.nil?
+      return if data.empty?
+      return unless data.key?(:values)
+      if data.key?(:mute)
+        @opts[:mute] = data[:mute]
+      end
+      data[:values].each do |v|
+        @values << Value.new(v[:value], v[:timestamp], v[:ttl])
+      end
+      @needs_update  = true
+    end
+
+    def save
+      return {} if @values.empty?
+      {
+        type: self.class.name.split('::').last,
+        mute: mute?,
+        values: @values.map { |x| x.to_h }
+      }
+    end
+
+    def to_h
+      save
     end
 
     protected
@@ -106,10 +132,6 @@ module Salus
         raise ArgumentError, "Option #{key} should be #{@attributes[key].join(" or ")}"
       end
       value
-    end
-
-    def needs_update?
-      @needs_update
     end
 
     def calc

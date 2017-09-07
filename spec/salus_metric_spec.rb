@@ -69,4 +69,42 @@ RSpec.describe Salus::Metric do
       expect(metric.expired?).to eq(true)
     end
   end
+
+  it "saves" do
+    metric = Salus::Metric.new
+
+    metric.push value: 10, timestamp: 100
+    metric.push value: 20, timestamp: 200, ttl: 100
+    metric.push value: 30, timestamp: 300
+    data = {
+      type: "Metric",
+      mute: false,
+      values: [{
+        value: 20, timestamp: 200, ttl: 100
+      }, {
+        value: 30, timestamp: 300, ttl: nil
+      }]
+    }
+
+    expect(metric.save).to eq(data)
+    expect(metric.to_h).to eq(data)
+  end
+
+  it "loads" do
+    metric = Salus::Metric.new
+    data = {
+      type: "Metric",
+      mute: true,
+      values: [{
+        value: 30, timestamp: 200, ttl: nil
+      }, {
+        value: 20, timestamp: 300, ttl: 100
+      }]
+    }
+    metric.load(data)
+    expect(metric.value).to eq(20)
+    expect(metric.timestamp).to eq(300)
+    expect(metric.expired?).to eq(true)
+    expect(metric.mute?).to eq(true)
+  end
 end

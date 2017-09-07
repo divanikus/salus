@@ -2,7 +2,7 @@ require "spec_helper"
 
 RSpec.describe Salus::Group do
   it "honors mute" do
-    g = Salus::Group.new "test" do
+    g = Salus::Group.new do
       gauge "test1", value: 10
       gauge "test2", value: 10
       gauge "test3", value: 30, mute: true
@@ -15,7 +15,7 @@ RSpec.describe Salus::Group do
   end
 
   it "allows to get mutes" do
-    g = Salus::Group.new "test" do
+    g = Salus::Group.new do
       gauge "test1", value: 10
       gauge "test2", value: 10
       gauge "test3", value: 30, mute: true
@@ -28,12 +28,12 @@ RSpec.describe Salus::Group do
   end
 
   it "fetchs values" do
-    g = Salus::Group.new "test" do
+    g = Salus::Group.new do
       gauge "test1", value: 10
       gauge "test2", value: 20
     end
     g.tick
-    expect(g["test1"]).to eq(10)
+    expect(g["test1"].value).to eq(10)
     expect(g.value("test2")).to eq(20)
     expect(g["test3"]).to eq(nil)
     expect(g.value("test4")).to eq(nil)
@@ -41,23 +41,19 @@ RSpec.describe Salus::Group do
 
   it "does calc" do
     a = 0
-    g = Salus::Group.new "test" do
+    g = Salus::Group.new do
       counter "test1", value: a * 10, timestamp: a
       counter "test2", value: a * 20, timestamp: a
     end
     g.tick
     a += 10
     g.tick
-    expect(g["test1"]).to eq(10.0)
-    expect(g["test2"]).to eq(20.0)
+    expect(g["test1"].value).to eq(10.0)
+    expect(g["test2"].value).to eq(20.0)
   end
 
   it "has metric delegates" do
-    g = Salus::Group.new "test" do end
+    g = Salus::Group.new do end
     expect(g.class.instance_methods).to include(:absolute, :counter, :derive, :gauge, :text)
-  end
-
-  it "brings exception without name" do
-    expect{Salus::Group.new}.to raise_error(ArgumentError)
   end
 end
