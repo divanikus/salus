@@ -36,7 +36,7 @@ module Salus
     end
 
     def initialize
-      @values = Fifo.new(STORAGE_DEPTH)
+      @values = Fifo.new(self.class::STORAGE_DEPTH)
       @opts   = {}
       @attributes = {}
       @last_calced_value = nil
@@ -108,16 +108,16 @@ module Salus
     end
 
     def save
+      to_h
+    end
+
+    def to_h
       return {} if @values.empty?
       {
         type: self.class.name.split('::').last,
         mute: mute?,
         values: @values.map { |x| x.to_h }
       }
-    end
-
-    def to_h
-      save
     end
 
     protected

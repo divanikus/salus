@@ -54,6 +54,116 @@ RSpec.describe Salus::Group do
 
   it "has metric delegates" do
     g = Salus::Group.new do end
-    expect(g.class.instance_methods).to include(:absolute, :counter, :derive, :gauge, :text)
+    types = Salus::Metric.descendants.map { |x| x.name.split('::').last.downcase.to_sym }
+    expect(types.count).to be >= 5
+    expect(g.class.instance_methods).to include(*types)
+  end
+
+  it "saves" do
+    data = {
+      :metrics => {
+        "test1" => {
+          :type => "Counter",
+          :mute => false,
+          :values => [
+            {:value => 0,   :timestamp => 0,  :ttl => nil},
+            {:value => 100, :timestamp => 10, :ttl => nil}
+          ]
+        },
+        "test2" => {
+          :type => "Gauge",
+          :mute => false,
+          :values => [
+            {:value => 200, :timestamp => 10, :ttl => nil}
+          ]
+        }
+      },
+      :groups => {
+        "test"=> {
+          :metrics => {
+            "test3" => {
+              :type => "Counter",
+              :mute => false,
+              :values => [
+                {:value => 200, :timestamp => 0,  :ttl => nil},
+                {:value => 400, :timestamp => 10, :ttl => nil}
+              ]
+            }
+          }
+        }
+      }
+    }
+
+    a = 0
+    b = 10
+    g = Salus::Group.new do
+      counter "test1", value: a * 10, timestamp: a
+      gauge "test2", value: a * 20, timestamp: a
+
+      group "test" do
+        counter "test3", value: b * 20, timestamp: a
+      end
+    end
+    g.tick
+    a += 10
+    b += 10
+    g.tick
+
+    expect(g.save).to eq(data)
+    expect(g.to_h).to eq(data)
+  end
+
+  it "loads" do
+    data = {
+      :metrics => {
+        "test1" => {
+          :type => "Counter",
+          :mute => false,
+          :values => [
+            {:value => 0,   :timestamp => 0,  :ttl => nil},
+            {:value => 100, :timestamp => 10, :ttl => nil}
+          ]
+        },
+        "test2" => {
+          :type => "Gauge",
+          :mute => false,
+          :values => [
+            {:value => 200, :timestamp => 10, :ttl => nil}
+          ]
+        }
+      },
+      :groups => {
+        "test"=> {
+          :metrics => {
+            "test3" => {
+              :type => "Counter",
+              :mute => false,
+              :values => [
+                {:value => 200, :timestamp => 0,  :ttl => nil},
+                {:value => 400, :timestamp => 10, :ttl => nil}
+              ]
+            }
+          }
+        }
+      }
+    }
+
+    a = 100
+    b = 200
+    g = Salus::Group.new do
+      counter "test1", value: a * 10, timestamp: a
+      gauge "test2", value: a * 20, timestamp: a
+
+      group "test" do
+        counter "test3", value: b * 20, timestamp: a
+      end
+    end
+    g.load(data)
+    expect(g["test1"].value).to eq(10.0)
+    expect(g["test2"].value).to eq(200.0)
+    g.tick
+    expect(g["test1"].value).to eq(10.0)
+    expect(g["test2"].value).to eq(2000.0)
+    expect(g.groups["test"]["test3"].value).to eq(40.0)
   end
 end
