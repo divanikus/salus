@@ -1,5 +1,6 @@
 require "salus/version"
 require "salus/group"
+require "salus/thread"
 
 module Salus
   @groups = {}
