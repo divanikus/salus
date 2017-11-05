@@ -3,7 +3,7 @@ module Salus
   class CountDownLatch
     include Lockable
 
-    def initialize(to)
+    def initialize(to=1)
       synchronize { @count = to.to_i }
       raise ArgumentError, "cannot count down from negative integer" unless @count >= 0
     end

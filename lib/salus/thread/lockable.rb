@@ -34,18 +34,18 @@ module Salus
       end
     end
 
-    def wait(timeout)
+    def wait(timeout=nil)
       __wait(timeout)
     end
 
     protected
     def __lock
-      @__lock__ = ::Mutex.new unless defined? @__lock__
+      @__lock__ ||= ::Mutex.new
       @__lock__
     end
 
     def __condition
-      @__condition__ = ::ConditionVariable.new unless defined? @__condition__
+      @__condition__ ||= ::ConditionVariable.new
       @__condition__
     end
 

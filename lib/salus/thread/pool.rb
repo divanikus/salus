@@ -19,6 +19,8 @@ module Salus
     # A task incapsulates a block being ran by the pool and the arguments to pass
     # to it.
     class Task
+      include Observable
+
       Timeout = Class.new(Exception)
       Asked   = Class.new(Exception)
 
@@ -59,13 +61,16 @@ module Salus
 
         @thread     = Thread.current
         @running    = true
+        @result     = nil
         @started_at = MonotonicTime.get
 
         pool.__send__ :wake_up_timeout
 
         begin
           @result = @block.call(*@arguments)
+          notify_observers(Time.now, @result, nil)
         rescue Exception => reason
+          notify_observers(Time.now, nil, reason)
           if reason.is_a? Timeout
             @timedout = true
           elsif reason.is_a? Asked

@@ -1,6 +1,6 @@
 require "salus/version"
-require "salus/group"
 require "salus/thread"
+require "salus/group"
 
 module Salus
   @groups = {}
@@ -12,6 +12,10 @@ module Salus
   end
 
   def self.groups
+    @groups
+  end
+
+  def self.root
     @groups
   end
 end

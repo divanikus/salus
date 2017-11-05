@@ -16,6 +16,7 @@ module Salus
   end
 
   class Metric
+    include Lockable
     STORAGE_DEPTH = 2
 
     Value = Struct.new(:value, :timestamp, :ttl) do
@@ -50,16 +51,18 @@ module Salus
     end
 
     def mute?
-      @opts[:mute] || false
+      synchronize { @opts[:mute] || false }
     end
 
     def push(*args, &block)
       opts   = args.select { |x| x.is_a?(Hash) }.first
       opts ||= {}
 
-      opts.each do |k, v|
-        validate(k, v)
-        @opts[k] = v unless [:value, :ttl, :timestamp].include?(k)
+      synchronize do
+        opts.each do |k, v|
+          validate(k, v)
+          @opts[k] = v unless [:value, :ttl, :timestamp].include?(k)
+        end
       end
 
       if block_given?
@@ -72,25 +75,33 @@ module Salus
         opts[:value] = v
       end
 
-      @values << Value.new(opts[:value], opts[:timestamp] || Time.now.to_f, opts[:ttl])
-      @needs_update = true
+      synchronize do
+        @values << Value.new(opts[:value], opts[:timestamp] || Time.now.to_f, opts[:ttl])
+        @needs_update = true
+      end
     end
 
     def timestamp
-      calc if @needs_update
-      @last_calced_ts
+      synchronize do
+        calc if @needs_update
+        @last_calced_ts
+      end
     end
 
     def value
-      calc if @needs_update
-      @last_calced_value
+      synchronize do
+        calc if @needs_update
+        @last_calced_value
+      end
     end
 
     def expired?(ts=nil)
-      if @values.empty?
-        true
-      else
-        @values.last.expired?(ts)
+      synchronize do
+        if @values.empty?
+          true
+        else
+          @values.last.expired?(ts)
+        end
       end
     end
 
@@ -98,13 +109,15 @@ module Salus
       return if data.nil?
       return if data.empty?
       return unless data.key?(:values)
-      if data.key?(:mute)
-        @opts[:mute] = data[:mute]
+      synchronize do
+        if data.key?(:mute)
+          @opts[:mute] = data[:mute]
+        end
+        data[:values].each do |v|
+          @values << Value.new(v[:value], v[:timestamp], v[:ttl])
+        end
+        @needs_update  = true
       end
-      data[:values].each do |v|
-        @values << Value.new(v[:value], v[:timestamp], v[:ttl])
-      end
-      @needs_update  = true
     end
 
     def save
@@ -113,11 +126,13 @@ module Salus
 
     def to_h
       return {} if @values.empty?
-      {
-        type: self.class.name.split('::').last,
-        mute: mute?,
-        values: @values.map { |x| x.to_h }
-      }
+      synchronize do
+        {
+          type: self.class.name.split('::').last,
+          mute: mute?,
+          values: @values.map { |x| x.to_h }
+        }
+      end
     end
 
     protected
