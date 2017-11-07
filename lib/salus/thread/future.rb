@@ -16,6 +16,7 @@ require 'weakref'
 module Salus
   class Future
     include Observable
+    include Logging
     Cancel = Class.new(Exception)
 
     # Create a future with the passed block and optionally using the passed pool.
@@ -27,9 +28,11 @@ module Salus
       task = proc {
         begin
           deliver block.call
+          notify_and_delete_observers(Time.now, @value, nil)
         rescue Exception => e
           @exception = e
-
+          notify_and_delete_observers(Time.now, nil, e)
+          log DEBUG, @exception
           deliver nil
         end
       }

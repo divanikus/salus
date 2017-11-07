@@ -1,8 +1,8 @@
 module Salus
   class Text < Metric
     STORAGE_DEPTH = 1
-    def initialize
-      super
+    def initialize(defaults={})
+      super(defaults)
       option :value, Symbol, String
     end
   end

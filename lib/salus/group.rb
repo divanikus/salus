@@ -14,11 +14,12 @@ module Salus
     def_delegators :@metrics, :[], :key?, :values_at, :fetch, :length, :delete, :empty?
     attr_reader :title
 
-    def initialize(&block)
+    def initialize(defaults={}, &block)
       @metrics = {}
       @groups  = {}
       @cache   = {}
       @proc    = block
+      @opts    = defaults.clone
     end
 
     Metric.descendants.each do |m|
@@ -28,17 +29,26 @@ module Salus
         raise ArgumentError, "Metric needs a name!" if title.nil?
 
         unless @metrics.key?(title)
-          @metrics[title] = m.new
+          @metrics[title] = m.new(@opts)
         end
 
         @metrics[title].push(*args, &blk)
       end
     end
 
+    def default(*args)
+      opts   = args.select { |x| x.is_a?(Hash) }.first
+      opts ||= {}
+      opts.each do |k, v|
+        next if [:value, :timestamp].include?(k)
+        @opts[k] = v
+      end
+    end
+
     def group(title, &block)
       synchronize do
         unless @groups.key?(title)
-          @groups[title] = Group.new(&block)
+          @groups[title] = Group.new(@opts, &block)
           if @cache.key?(title)
             @groups[title].load(@cache[title])
             @cache.delete(title)
@@ -93,12 +103,15 @@ module Salus
       return if data.nil?
       return if data.empty?
       synchronize do
+        if data.key?(:defaults)
+          @opts = data[:defaults].clone
+        end
         if data.key?(:metrics)
           types = Metric.descendants.map{ |x| x.name.split("::").last }
           data[:metrics].each do |k, v|
             next unless v.key?(:type)
             next unless types.include?(v[:type])
-            @metrics[k] = Object.const_get("Salus::" + v[:type]).new
+            @metrics[k] = Object.const_get("Salus::" + v[:type]).new(@opts)
             @metrics[k].load(v)
           end
         end
@@ -122,6 +135,9 @@ module Salus
         unless @groups.empty?
           ret[:groups]  = {}
           @groups.each  { |k, v| ret[:groups][k]  = v.to_h }
+        end
+        unless @opts.empty?
+          ret[:defaults] = @opts
         end
         ret
       end

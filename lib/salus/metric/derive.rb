@@ -1,8 +1,9 @@
 module Salus
   class Derive < Metric
-    def initialize
-      super
+    def initialize(defaults={})
+      super(defaults)
       option :minimum, Numeric
+      validate(:minimum, @opts[:minimum]) if @opts.key?(:minimum)
     end
 
     protected

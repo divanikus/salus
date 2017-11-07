@@ -1,4 +1,5 @@
 require "thread"
+require "salus/thread/cpu"
 require "salus/thread/monotonictime"
 require "salus/thread/lockable"
 require "salus/thread/observable"

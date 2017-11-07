@@ -166,4 +166,61 @@ RSpec.describe Salus::Group do
     expect(g["test2"].value).to eq(2000.0)
     expect(g.groups["test"]["test3"].value).to eq(40.0)
   end
+
+  it "honors defaults" do
+    data = {
+      :defaults => {:ttl => 30},
+      :metrics => {
+        "test1" => {
+          :type=>"Gauge",
+          :mute=>false,
+          :values=>[{:value => 10, :timestamp => 10, :ttl => 30}]
+        }
+      },
+      :groups => {
+        "test2" => {
+          :defaults => {:ttl => 30, :mute => true},
+          :metrics => {
+            "test2a" => {
+              :type => "Counter",
+              :mute => true,
+              :values => [{:value => 10, :timestamp => 10, :ttl=>30}]
+            },
+            "test2b" => {
+              :type => "Counter",
+              :mute => false,
+              :values => [{:value => 20, :timestamp => 10, :ttl=>30}]
+            }
+          }
+        },
+        "test3" => {
+          :defaults => {:ttl => 100},
+          :metrics => {
+            "test3" => {
+              :type => "Counter",
+              :mute => false,
+              :values => [{:value => 30, :timestamp => 10, :ttl => 100}]
+            }
+          }
+        }
+      }
+    }
+
+    g = Salus::Group.new do
+      default ttl: 30
+      gauge "test1", value: 10, timestamp: 10
+      group "test2" do
+        default mute: true
+        counter "test2a", value: 10, timestamp: 10
+        counter "test2b", value: 20, timestamp: 10, mute: false
+      end
+      group "test3" do
+        default ttl: 100
+        counter "test3", value: 30, timestamp: 10
+      end
+    end
+    g.tick
+
+    expect(g.save).to eq(data)
+  end
 end

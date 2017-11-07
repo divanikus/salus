@@ -1,9 +1,10 @@
 module Salus
   class Counter < Metric
     INT32_MAX = 2**32
-    def initialize
-      super
+    def initialize(defaults={})
+      super(defaults)
       option :maximum, Numeric
+      validate(:maximum, @opts[:maximum]) if @opts.key?(:maximum)
     end
 
     def calc

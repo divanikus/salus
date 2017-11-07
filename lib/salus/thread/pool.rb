@@ -20,6 +20,7 @@ module Salus
     # to it.
     class Task
       include Observable
+      include Logging
 
       Timeout = Class.new(Exception)
       Asked   = Class.new(Exception)
@@ -73,10 +74,13 @@ module Salus
           notify_observers(Time.now, nil, reason)
           if reason.is_a? Timeout
             @timedout = true
+            log DEBUG, reason
           elsif reason.is_a? Asked
+            log DEBUG, reason
             return
           else
             @exception = reason
+            log ERROR, reason
             raise @exception if ThreadPool.abort_on_exception
           end
         end

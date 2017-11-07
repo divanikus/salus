@@ -36,9 +36,9 @@ module Salus
       @@descendants || []
     end
 
-    def initialize
+    def initialize(defaults={})
       @values = Fifo.new(self.class::STORAGE_DEPTH)
-      @opts   = {}
+      @opts   = defaults.clone
       @attributes = {}
       @last_calced_value = nil
       @last_calced_ts    = nil
@@ -48,6 +48,10 @@ module Salus
       option :value, Numeric
       option :timestamp, Numeric
       option :ttl, Numeric
+
+      @opts.each do |k, v|
+        validate(k, v)
+      end
     end
 
     def mute?
@@ -63,20 +67,18 @@ module Salus
           validate(k, v)
           @opts[k] = v unless [:value, :ttl, :timestamp].include?(k)
         end
-      end
 
-      if block_given?
-        v = begin
-          yield
-        rescue
-          nil
+        if block_given?
+          v = begin
+            yield
+          rescue
+            nil
+          end
+          validate(:value, v)
+          opts[:value] = v
         end
-        validate(:value, v)
-        opts[:value] = v
-      end
 
-      synchronize do
-        @values << Value.new(opts[:value], opts[:timestamp] || Time.now.to_f, opts[:ttl])
+        @values << Value.new(opts[:value], opts[:timestamp] || Time.now.to_f, opts[:ttl] || @opts[:ttl])
         @needs_update = true
       end
     end
