@@ -1,7 +1,7 @@
 module Salus
   module Configuration
     # An array of valid keys in the options hash when configuring a Gitlab::API.
-    VALID_OPTIONS_KEYS = %i(min_threads max_threads interval timeout logger).freeze
+    VALID_OPTIONS_KEYS = %i(min_threads max_threads interval tick_timeout render_timeout logger).freeze
 
     # @private
     attr_accessor(*VALID_OPTIONS_KEYS)
@@ -30,7 +30,8 @@ module Salus
       self.min_threads = 1 if self.min_threads == 0
       self.max_threads = CPU.count * 2
       self.interval = 30
-      self.timeout  = 15
+      self.tick_timeout   = 15
+      self.render_timeout = 10
       self.logger   = Logger.new(STDERR)
     end
   end
