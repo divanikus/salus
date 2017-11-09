@@ -3,6 +3,7 @@ require "salus/logging"
 require "salus/thread"
 require "salus/group"
 require "salus/configuration"
+require "salus/cli"
 
 module Salus
   extend Configuration

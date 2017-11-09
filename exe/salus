@@ -1,0 +1,9 @@
+#!/usr/bin/env ruby
+require 'salus'
+
+begin
+    Salus::CLI.start
+rescue Exception => e
+    puts "Error: " + e.message
+    exit(1)
+end
