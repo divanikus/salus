@@ -3,7 +3,7 @@ require "salus/logging"
 require "salus/thread"
 require "salus/group"
 require "salus/configuration"
-require "salus/cli"
+require "salus/renderer"
 
 module Salus
   extend Configuration
@@ -13,6 +13,10 @@ module Salus
     @@groups = {}
     @@renders= []
     @@opts   = {}
+
+    def on_win?
+      @@win ||= !(RUBY_PLATFORM =~ /bccwin|cygwin|djgpp|mingw|mswin|wince/i).nil?
+    end
 
     def group(title, &block)
       unless @@groups.key?(title)
@@ -34,8 +38,24 @@ module Salus
       end
     end
 
-    def render(&block)
-      @@renders << block
+    def render(obj=nil, &block)
+      if block_given?
+        @@renders << BlockRenderer.new(&block)
+      else
+        unless obj.is_a? Salus::Renderer
+          log ERROR, "#{obj.class} must be a subclass of Salus::Renderer"
+          return
+        end
+        @@renders << obj
+      end
+    end
+
+    def renders
+      @@renders
+    end
+
+    def load(file)
+      instance_eval(File.read(file), File.basename(file), 0) if File.exists?(file)
     end
 
     def load_state(&block)
@@ -61,8 +81,13 @@ module Salus
       latch = CountDownLatch.new(@@groups.count)
       @@groups.each do |k, v|
         pool.process do
-          v.tick
-          latch.count_down
+          begin
+            v.tick
+            latch.count_down
+          rescue Exception => e
+            log ERROR, e
+            latch.count_down
+          end
         end.timeout_after(Salus.tick_timeout)
       end
       latch.wait(Salus.tick_timeout + pause)
@@ -72,8 +97,13 @@ module Salus
       latch = CountDownLatch.new(@@renders.count)
       @@renders.each do |v|
         pool.process do
-          v.call(root)
-          latch.count_down
+          begin
+            v.render(root)
+            latch.count_down
+          rescue Exception => e
+            log ERROR, e
+            latch.count_down
+          end
         end.timeout_after(Salus.render_timeout)
       end
       latch.wait(Salus.render_timeout + pause)
@@ -91,7 +121,7 @@ module Salus
 
     protected
     def pool
-      @@pool ||= ThreadPool.new(self.min_threads, self.max_threads)
+      @@pool ||= ThreadPool.new(self.min_threads, self.max_threads).auto_trim!
     end
   end
 end

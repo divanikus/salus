@@ -64,6 +64,11 @@ RSpec.describe Salus::Metric do
   context "with ttl" do
     let(:metric) { Salus::Metric.new }
 
+    it "stores ttl" do
+      metric.push timestamp: 1000, ttl: 10
+      expect(metric.ttl).to eq(10)      
+    end
+
     it "expires" do
       metric.push timestamp: 1000, ttl: 10
       expect(metric.expired?).to eq(true)

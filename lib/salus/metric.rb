@@ -97,6 +97,12 @@ module Salus
       end
     end
 
+    def ttl
+      synchronize do
+        @values.empty? ? nil : @values.last.ttl
+      end
+    end
+
     def expired?(ts=nil)
       synchronize do
         if @values.empty?

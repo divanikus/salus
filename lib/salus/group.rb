@@ -12,7 +12,6 @@ module Salus
     include Lockable
 
     def_delegators :@metrics, :[], :key?, :values_at, :fetch, :length, :delete, :empty?
-    attr_reader :title
 
     def initialize(defaults={}, &block)
       @metrics = {}
@@ -34,6 +33,10 @@ module Salus
 
         @metrics[title].push(*args, &blk)
       end
+    end
+
+    def on_win?
+      Salus.on_win?
     end
 
     def default(*args)
