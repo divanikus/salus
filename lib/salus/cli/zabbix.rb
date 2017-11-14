@@ -44,27 +44,28 @@ module Salus
       cache  = load_cache(cache_file)
 
       if (cache.key?(name) && !expired?(cache[name], options))
-        STDOUT.puts cache[name][:value]
-      else
-        require "salus/zabbix"
-        load_files(get_files(options))
+        STDOUT.puts cache[name][:value] unless cache[name][:value].nil?
+        return
 
-        state_file = get_state_file(options)
-        load_state(state_file)
+      require "salus/zabbix"
+      load_files(get_files(options))
 
-        render = ZabbixCacheRenderer.new
-        Salus.renders.clear
-        Salus.render(render)
-        Salus.tick
-        cache  = render.data
+      state_file = get_state_file(options)
+      load_state(state_file)
 
-        if (cache.key?(name))
-          STDOUT.puts cache[name][:value]
-        end
+      render = ZabbixCacheRenderer.new
+      Salus.renders.clear
+      Salus.render(render)
+      Salus.tick
+      cache  = render.data
 
-        save_state(state_file)
-        save_cache(cache_file, cache)
+      if (cache.key?(name))
+        STDOUT.puts cache[name][:value]unless cache[name][:value].nil?
       end
+
+      save_state(state_file)
+      save_cache(cache_file, cache)
+      raise "Unknown parameter #{name}" unless cache.key?(name)
     end
 
     private
