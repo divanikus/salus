@@ -22,15 +22,14 @@ module Salus
     ZABBIX_CACHE_FILE  = "zabbix.cache.yml"
 
 
-    desc "discover", "Run discovery"
+    desc "discover NAME", "Run discovery"
     method_option :file,  aliases: "-f", :type => :array, desc: "File(s) with metrics' definition"
-    method_option :name,  aliases: "-n", :type => :string, :required => true, desc: "Discovery name"
     method_option :debug, aliases: "-d", :type => :boolean, :default => false
-    def discover
+    def discover(name)
       Salus.logger.level = options[:debug] ? Logger::DEBUG : Logger::WARN
       require "salus/zabbix"
       load_files(get_files(options))
-      puts Salus.discovery(options[:name])
+      puts Salus.discovery(name)
     end
 
     desc "parameter NAME", "Get a requested parameter"
