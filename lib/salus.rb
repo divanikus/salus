@@ -38,12 +38,16 @@ module Salus
       end
     end
 
+    def defaults
+      @@opts
+    end
+
     def render(obj=nil, &block)
       if block_given?
         @@renders << BlockRenderer.new(&block)
       else
-        unless obj.is_a? Salus::Renderer
-          log ERROR, "#{obj.class} must be a subclass of Salus::Renderer"
+        unless obj.is_a? Salus::BaseRenderer
+          log ERROR, "#{obj.class} must be a subclass of Salus::BaseRenderer"
           return
         end
         @@renders << obj
@@ -52,6 +56,16 @@ module Salus
 
     def renders
       @@renders
+    end
+
+    def reset
+      @@groups  = {}
+      @@renders = []
+      @@opts    = {}
+      if defined?(@@pool) && @@pool.is_a?(Salus::ThreadPool)
+        @@pool.shutdown!
+        @@pool = nil
+      end
     end
 
     def load(file)
