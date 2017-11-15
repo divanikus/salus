@@ -87,6 +87,8 @@ $ salus loop -f sample.salus
 ^C
 ```
 
+You may invoke several salus scripts at once, just specify all of them in space delimited list. You might also specify a directory with `Salusfile` or many `*.salus` files. By default `salus` does search `*.salus` and `Salusfile` in the current directory.
+
 ### Primitives
 
 #### Group
