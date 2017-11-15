@@ -108,7 +108,7 @@ Could be one of the following (mimicking RRDtool data sources):
  * Gauge: values stored as is
  * Derive: a rate of something per second, best suites for values that rarely overflow
  * Counter: almost same as derive, but with overflow detection for 32- and 64-bit counters
- * Absoulte: a rate of a counter, which resets on reading
+ * Absolute: a rate of a counter, which resets on reading
  * Text: just a text stored as is
 
 A metric should have a name and a value at the very minimum. You might also specify a custom or default TTL. A metric can be also `mute`, which means it wouldn't appear in the output, unless told to do so.
