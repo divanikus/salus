@@ -2,6 +2,8 @@
 
 Salus is a simple DSL for writing collector agents for different monitoring systems. I'm just tired of rewriting those primitives from scratch for every new check I'm willing to add to a monitoring system.
 
+_This is alpha quality software right now, but you might help to improve it_
+
 ## Installation
 
 Add this line to your application's Gemfile:
