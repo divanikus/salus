@@ -149,6 +149,29 @@ You may add more than one renderer at once and send your data to as many monitor
 
 Check sample renderers for examples.
 
+### Pipeline
+
+Salus pipeline is rather straightforward and consists of two stages:
+ * Collect data (execute groups' code)
+ * Send data (execute renderers' code)
+
+You might run it once by cron or in infinite loop mode. Each stage is executed using embed thread pool with pre-set timeouts.
+
+Thread pool and timeouts could be configured using `configure`
+
+```ruby
+Salus.configure do |config|
+  # Thread pool settings
+  config.min_threads = (CPU.count / 2 == 0) ? 1 : CPU.count / 2
+  config.max_threads = CPU.count * 2
+
+  config.interval = 30 # Interval between runs in loop mode
+  config.tick_timeout   = 15 # Data collection timeout
+  config.render_timeout = 10 # Data rendering timeout
+  config.logger   = Logger.new(STDERR) # Default logger
+end
+```
+
 ### Zabbix
 
 Zabbix uses two stage collecting. First of all, it queries (discovers) the list of objects to be checked. Next, it would ask for exact values of specified metrics of an object one by one. Sometimes this means making a lot of requests to a monitored service. So many script writers use some kind of result caching to lower unnecessary work. Salus also writes a result cache file (`-c` flag). Cache TTL for a metric is a half of it's real TTL or 60 seconds if TTL is unspecified. Upon parameter request it is loaded from cache and if it's expired, whole cache is invalidated and recalculated using salus script.
