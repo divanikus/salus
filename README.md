@@ -222,7 +222,7 @@ $ salus zabbix discover cpus -f zabbix.salus
 Later you can get a cpu usage ratio
 
 ```bash
-$ salus zabbix parameter cpu.usage[cpu5] -f zabbix.salus
+$ salus zabbix parameter cpu.usage[cpu5] -f zabbix.salus && sleep 31 && salus zabbix parameter cpu.usage[cpu5] -f zabbix.salus
 8.619550926524335
 ```
 
