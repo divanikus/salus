@@ -72,7 +72,7 @@ $ salus -f sample.salus
 {"name":"memory.usage","value":25.60121068625779,"timestamp":1510699623.863265,"ttl":60}
 ```
 
-Because `cpu.usage` is made of counters, you'll have to run the command at least twice. Be aware of `salus` making `salus.state.yml` for persisting it's state. You may redifine file name and location with `-s` switch.
+Because `cpu.usage` is made of counters, you'll have to run the command at least twice. Be aware of `salus` making `salus.state.yml` for persisting it's state. You may redefine file name and location with `-s` switch.
 
 You can also run in infinite loop mode
 
