@@ -226,7 +226,7 @@ $ salus zabbix parameter cpu.usage[cpu5] -f zabbix.salus
 8.619550926524335
 ```
 
-**NOTE!** You want get the result on the first run, because cpu usage on Linux needs to get two points in time to be calculated. `zabbix` subcommand uses caching of the results, so you have to wait for 30 seconds to get next result. But if you'll wait for more than TTL (60 seconds), you'll get empty result again.
+**NOTE!** You won't get the result on the first run, because cpu usage on Linux needs to get two points in time to be calculated. `zabbix` subcommand uses caching of the results, so you have to wait for 30 seconds to get next result. But if you'll wait for more than TTL (60 seconds), you'll get empty result again.
 
 ## Development
 
