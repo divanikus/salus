@@ -6,8 +6,8 @@ require "salus/version"
 Gem::Specification.new do |spec|
   spec.name          = "salus"
   spec.version       = Salus::VERSION
-  spec.authors       = ["Andrey Perminov"]
-  spec.email         = ["aperminov@gmail.com"]
+  spec.authors       = ["divanikus"]
+  spec.email         = ["d1pro@yandex.ru"]
 
   spec.summary       = %q{Simple DSL for writing metrics collecting agents.}
   spec.description   = %q{A simple library for quick creation of collector agents.}

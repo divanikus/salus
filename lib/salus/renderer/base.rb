@@ -36,7 +36,7 @@ module Salus
           end
         end
       when Salus::Metric
-        block.call(prefix, node)
+        block.call(prefix, node) unless node.expired?
       else
         log WARN, "Unknown node type #{node.class}"
       end

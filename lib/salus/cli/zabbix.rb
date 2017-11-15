@@ -46,6 +46,7 @@ module Salus
       if (cache.key?(name) && !expired?(cache[name], options))
         STDOUT.puts cache[name][:value] unless cache[name][:value].nil?
         return
+      end
 
       require "salus/zabbix"
       load_files(get_files(options))
