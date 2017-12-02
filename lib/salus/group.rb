@@ -11,14 +11,14 @@ module Salus
     extend Forwardable
     include Lockable
 
-    def_delegators :@metrics, :[], :key?, :values_at, :fetch, :length, :delete, :empty?
+    def_delegators :@_metrics, :[], :key?, :values_at, :fetch, :length, :delete, :empty?
 
     def initialize(defaults={}, &block)
-      @metrics = {}
-      @groups  = {}
-      @cache   = {}
-      @proc    = block
-      @opts    = defaults.clone
+      @_metrics = {}
+      @_groups  = {}
+      @_cache   = {}
+      @_proc    = block
+      @_opts    = defaults.clone
     end
 
     Metric.descendants.each do |m|
@@ -27,11 +27,11 @@ module Salus
         title = args.select { |x| x.is_a?(String) }.first
         raise ArgumentError, "Metric needs a name!" if title.nil?
 
-        unless @metrics.key?(title)
-          @metrics[title] = m.new(@opts)
+        unless @_metrics.key?(title)
+          @_metrics[title] = m.new(@_opts)
         end
 
-        @metrics[title].push(*args, &blk)
+        @_metrics[title].push(*args, &blk)
       end
     end
 
@@ -44,40 +44,40 @@ module Salus
       opts ||= {}
       opts.each do |k, v|
         next if [:value, :timestamp].include?(k)
-        @opts[k] = v
+        @_opts[k] = v
       end
     end
 
     def group(title, &block)
       synchronize do
-        unless @groups.key?(title)
-          @groups[title] = Group.new(@opts, &block)
-          if @cache.key?(title)
-            @groups[title].load(@cache[title])
-            @cache.delete(title)
+        unless @_groups.key?(title)
+          @_groups[title] = Group.new(@_opts, &block)
+          if @_cache.key?(title)
+            @_groups[title].load(@_cache[title])
+            @_cache.delete(title)
           end
         end
       end
     end
 
     def groups
-      synchronize { @groups }
+      synchronize { @_groups }
     end
 
     def has_subgroups?
-      synchronize { !@groups.empty? }
+      synchronize { !@_groups.empty? }
     end
 
     def value(title)
-      synchronize { @metrics.key?(title) ? @metrics[title].value : nil }
+      synchronize { @_metrics.key?(title) ? @_metrics[title].value : nil }
     end
 
     def keys(allow_mute=false)
       synchronize do
         if allow_mute
-          @metrics.keys
+          @_metrics.keys
         else
-          @metrics.keys.select { |x| !@metrics[x].mute? }
+          @_metrics.keys.select { |x| !@_metrics[x].mute? }
         end
       end
     end
@@ -85,9 +85,9 @@ module Salus
     def values(allow_mute=false)
       synchronize do
         if allow_mute
-          @metrics.values
+          @_metrics.values
         else
-          @metrics.values.select { |x| !x.mute? }
+          @_metrics.values.select { |x| !x.mute? }
         end
       end
     end
@@ -95,9 +95,9 @@ module Salus
     def each(allow_mute=false, &block)
       synchronize do
         if allow_mute
-          @metrics.each(&block)
+          @_metrics.each(&block)
         else
-          @metrics.select { |k, v| !v.mute? }.each(&block)
+          @_metrics.select { |k, v| !v.mute? }.each(&block)
         end
       end
     end
@@ -107,19 +107,19 @@ module Salus
       return if data.empty?
       synchronize do
         if data.key?(:defaults)
-          @opts = data[:defaults].clone
+          @_opts = data[:defaults].clone
         end
         if data.key?(:metrics)
           types = Metric.descendants.map{ |x| x.name.split("::").last }
           data[:metrics].each do |k, v|
             next unless v.key?(:type)
             next unless types.include?(v[:type])
-            @metrics[k] = Object.const_get("Salus::" + v[:type]).new(@opts)
-            @metrics[k].load(v)
+            @_metrics[k] = Object.const_get("Salus::" + v[:type]).new(@_opts)
+            @_metrics[k].load(v)
           end
         end
         if data.key?(:groups)
-          @cache = data[:groups]
+          @_cache = data[:groups]
         end
       end
     end
@@ -131,27 +131,27 @@ module Salus
     def to_h
       ret = {}
       synchronize do
-        unless @metrics.empty?
+        unless @_metrics.empty?
           ret[:metrics] = {}
-          @metrics.each { |k, v| ret[:metrics][k] = v.to_h }
+          @_metrics.each { |k, v| ret[:metrics][k] = v.to_h }
         end
-        unless @groups.empty?
+        unless @_groups.empty?
           ret[:groups]  = {}
-          @groups.each  { |k, v| ret[:groups][k]  = v.to_h }
+          @_groups.each  { |k, v| ret[:groups][k]  = v.to_h }
         end
-        unless @opts.empty?
-          ret[:defaults] = @opts
+        unless @_opts.empty?
+          ret[:defaults] = @_opts
         end
         ret
       end
     end
 
     def tick
-      instance_eval(&@proc)
-      @groups.each do |k, v|
+      instance_eval(&@_proc)
+      @_groups.each do |k, v|
         v.tick
       end
-      @cache.clear unless @cache.empty?
+      @_cache.clear unless @_cache.empty?
     end
   end
 end

@@ -10,22 +10,23 @@ module Salus
 
   class << self
     include Logging
-    @@groups = {}
-    @@renders= []
-    @@opts   = {}
+    @@_groups = {}
+    @@_renders= []
+    @@_opts   = {}
+    @@_vars   = {}
 
     def on_win?
-      @@win ||= !(RUBY_PLATFORM =~ /bccwin|cygwin|djgpp|mingw|mswin|wince/i).nil?
+      @@_win ||= !(RUBY_PLATFORM =~ /bccwin|cygwin|djgpp|mingw|mswin|wince/i).nil?
     end
 
     def group(title, &block)
       unless @@groups.key?(title)
-        @@groups[title] = Group.new(@@opts, &block)
+        @@_groups[title] = Group.new(@@_opts, &block)
       end
     end
 
     def groups
-      @@groups
+      @@_groups
     end
     alias root groups
 
@@ -34,37 +35,48 @@ module Salus
       opts ||= {}
       opts.each do |k, v|
         next if [:value, :timestamp].include?(k)
-        @@opts[k] = v
+        @@_opts[k] = v
       end
     end
 
     def defaults
-      @@opts
+      @@_opts
+    end
+
+    def var(*args)
+      opts   = args.select { |x| x.is_a?(Hash) }.first
+      opts ||= {}
+      opts.each {|k, v| @@_vars[k] = v}
+    end
+
+    def vars
+      @@_vars
     end
 
     def render(obj=nil, &block)
       if block_given?
-        @@renders << BlockRenderer.new(&block)
+        @@_renders << BlockRenderer.new(&block)
       else
         unless obj.is_a? Salus::BaseRenderer
           log ERROR, "#{obj.class} must be a subclass of Salus::BaseRenderer"
           return
         end
-        @@renders << obj
+        @@_renders << obj
       end
     end
 
     def renders
-      @@renders
+      @@_renders
     end
 
     def reset
-      @@groups  = {}
-      @@renders = []
-      @@opts    = {}
-      if defined?(@@pool) && @@pool.is_a?(Salus::ThreadPool)
-        @@pool.shutdown!
-        @@pool = nil
+      @@_groups  = {}
+      @@_renders = []
+      @@_opts    = {}
+      @@_vars    = {}
+      if defined?(@@_pool) && @@_pool.is_a?(Salus::ThreadPool)
+        @@_pool.shutdown!
+        @@_pool = nil
       end
     end
 
@@ -77,23 +89,23 @@ module Salus
       return if data.nil?
       return if data.empty?
       data.each do |k, v|
-        @@groups[k].load(v) if @@groups.key?(k)
+        @@_groups[k].load(v) if @@_groups.key?(k)
       end
     end
 
     def save_state(&block)
       data = {}
-      @@groups.each { |k, v| data[k]  = v.to_h }
+      @@_groups.each { |k, v| data[k]  = v.to_h }
       block.call(data)
     end
 
     def tick
-      return if @@groups.empty?
+      return if @@_groups.empty?
       pause = (Salus.interval - Salus.tick_timeout - Salus.render_timeout) / 2
       pause = 1 if (pause <= 0)
 
-      latch = CountDownLatch.new(@@groups.count)
-      @@groups.each do |k, v|
+      latch = CountDownLatch.new(@@_groups.count)
+      @@_groups.each do |k, v|
         pool.process do
           begin
             v.tick
@@ -107,9 +119,9 @@ module Salus
       latch.wait(Salus.tick_timeout + pause)
       log DEBUG, "Collection finished. Threads: #{pool.spawned} spawned, #{pool.waiting} waiting, #{Thread.list.count} total"
 
-      return if @@renders.empty?
-      latch = CountDownLatch.new(@@renders.count)
-      @@renders.each do |v|
+      return if @@_renders.empty?
+      latch = CountDownLatch.new(@@_renders.count)
+      @@_renders.each do |v|
         pool.process do
           begin
             v.render(root)
@@ -135,7 +147,7 @@ module Salus
 
     protected
     def pool
-      @@pool ||= ThreadPool.new(self.min_threads, self.max_threads).auto_trim!
+      @@_pool ||= ThreadPool.new(self.min_threads, self.max_threads).auto_trim!
     end
   end
 end

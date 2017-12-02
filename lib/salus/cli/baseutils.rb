@@ -63,7 +63,9 @@ module Salus
     end
 
     def get_state_file(options={})
-      options.fetch(:state, File.join(Dir.pwd, SALUS_STATE_FILE))
+      options.fetch(:state,
+        Salus.vars.fetch(:state_file,
+          File.join(Dir.pwd, SALUS_STATE_FILE)))
     end
 
     def get_files(options={})

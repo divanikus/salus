@@ -21,7 +21,6 @@ module Salus
     include Thor::Actions
     ZABBIX_CACHE_FILE  = "zabbix.cache.yml"
 
-
     desc "discover NAME", "Run discovery"
     method_option :file,  aliases: "-f", :type => :array, desc: "File(s) with metrics' definition"
     method_option :debug, aliases: "-d", :type => :boolean, :default => false
@@ -40,16 +39,19 @@ module Salus
     method_option :debug, aliases: "-d", :type => :boolean, :default => false
     def parameter(name)
       Salus.logger.level = options[:debug] ? Logger::DEBUG : Logger::WARN
-      cache_file = options.fetch(:cache, File.join(Dir.pwd, ZABBIX_CACHE_FILE))
+
+      require "salus/zabbix"
+      load_files(get_files(options))
+
+      cache_file = options.fetch(:cache,
+        Salus.vars.fetch(:zabbix_cache_file,
+          File.join(Dir.pwd, ZABBIX_CACHE_FILE)))
       cache  = load_cache(cache_file)
 
       if (cache.key?(name) && !expired?(cache[name], options))
         STDOUT.puts cache[name][:value] unless cache[name][:value].nil?
         return
       end
-
-      require "salus/zabbix"
-      load_files(get_files(options))
 
       state_file = get_state_file(options)
       load_state(state_file)
