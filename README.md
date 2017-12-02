@@ -29,6 +29,7 @@ Quick sample:
 ```ruby
 require "json"
 default ttl: 60
+var state_file: "system.state.yml"
 
 group "cpu" do
   data = File.open("/proc/stat").read.split(/\n/).grep(/^cpu /)
@@ -186,6 +187,8 @@ Sample Salus script for collecting CPU usage ratio on Linux for Zabbix Agent is 
 require "salus/zabbix"
 
 default ttl: 60
+var state_file: "cpu.state.yml"
+var zabbix_cache_file: "cpu.cache.yml"
 
 discover "cpus" do |data|
   stat = File.open("/proc/stat").read.split(/\n/).grep(/^cpu\d/)

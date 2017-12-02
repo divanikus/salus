@@ -20,7 +20,7 @@ module Salus
     end
 
     def group(title, &block)
-      unless @@groups.key?(title)
+      unless @@_groups.key?(title)
         @@_groups[title] = Group.new(@@_opts, &block)
       end
     end
