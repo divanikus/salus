@@ -1,3 +1,5 @@
+require "salus/zabbix"
+
 module Salus
   class ZabbixCacheRenderer < BaseRenderer
     ZABBIX_DEFAULT_TTL = 60
@@ -26,7 +28,6 @@ module Salus
     method_option :debug, aliases: "-d", :type => :boolean, :default => false
     def discover(name)
       Salus.logger.level = options[:debug] ? Logger::DEBUG : Logger::WARN
-      require "salus/zabbix"
       load_files(get_files(options))
       puts Salus.discovery(name)
     end
@@ -40,7 +41,6 @@ module Salus
     def parameter(name)
       Salus.logger.level = options[:debug] ? Logger::DEBUG : Logger::WARN
 
-      require "salus/zabbix"
       load_files(get_files(options))
 
       cache_file = options.fetch(:cache,
@@ -69,6 +69,26 @@ module Salus
       save_state(state_file)
       save_cache(cache_file, cache)
       raise "Unknown parameter #{name}" unless cache.key?(name)
+    end
+
+    desc "bulk NAME", "Get a bunch of parameters under the NAME group"
+    method_option :file,  aliases: "-f", :type => :array,  desc: "File(s) with metrics' definition"
+    method_option :state, aliases: "-s", :type => :string, desc: "State file location"
+    method_option :debug, aliases: "-d", :type => :boolean, :default => false
+    def bulk(name)
+      Salus.logger.level = options[:debug] ? Logger::DEBUG : Logger::WARN
+
+      load_files(get_files(options))
+
+      state_file = get_state_file(options)
+      load_state(state_file)
+
+      render = ZabbixBulkRenderer.new(group: name)
+      Salus.renders.clear
+      Salus.render(render)
+      Salus.tick
+
+      save_state(state_file)
     end
 
     private
