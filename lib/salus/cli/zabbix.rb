@@ -10,7 +10,6 @@ module Salus
       iterate(data) do |name, metric|
         name  = name.gsub(/\.\[/, '[')
         value = metric.value
-        value = value.dump if (!value.nil? && metric.is_a?(Salus::Text))
         # Metric cache TTL is a half of real metric TTL
         ttl   = metric.ttl.nil? ? ZABBIX_DEFAULT_TTL : (metric.ttl / 2)
         @data[name] = {timestamp: metric.timestamp, cache_ttl: ttl, value: value}
@@ -85,10 +84,11 @@ module Salus
           File.join(Dir.pwd, ZABBIX_CACHE_FILE)))
       cache  = load_cache(cache_file)
 
-      keys = cache.keys.grep(/^#{group}\./)
+      re = /^#{Regexp.escape(group)}\./
+      keys = cache.keys.grep(re)
       if !keys.empty? && (keys.reduce(true) { |x, v| x &= !expired?(cache[v], options) })
         keys.each do |key|
-          name = key.sub(/^#{group}\./, '')
+          name = key.sub(re, '')
           name = name.gsub(/\.\[/, '[')
           STDOUT.puts "#{name}\t#{cache[key][:value]}" unless cache[key][:value].nil?
         end
