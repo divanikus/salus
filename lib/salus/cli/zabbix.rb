@@ -71,24 +71,42 @@ module Salus
       raise "Unknown parameter #{name}" unless cache.key?(name)
     end
 
-    desc "bulk NAME", "Get a bunch of parameters under the NAME group"
+    desc "bulk GROUP", "Get a bunch of parameters under the GROUP group"
     method_option :file,  aliases: "-f", :type => :array,  desc: "File(s) with metrics' definition"
     method_option :state, aliases: "-s", :type => :string, desc: "State file location"
     method_option :debug, aliases: "-d", :type => :boolean, :default => false
-    def bulk(name)
+    def bulk(group)
       Salus.logger.level = options[:debug] ? Logger::DEBUG : Logger::WARN
 
       load_files(get_files(options))
 
+      cache_file = options.fetch(:cache,
+        Salus.vars.fetch(:zabbix_cache_file,
+          File.join(Dir.pwd, ZABBIX_CACHE_FILE)))
+      cache  = load_cache(cache_file)
+
+      keys = cache.keys.grep(/^#{group}\./)
+      if !keys.empty? && (keys.reduce(true) { |x, v| x &= !expired?(cache[v], options) })
+        keys.each do |key|
+          name = key.sub(/^#{group}\./, '')
+          name = name.gsub(/\.\[/, '[')
+          STDOUT.puts "#{name}\t#{cache[key][:value]}" unless cache[key][:value].nil?
+        end
+        return
+      end
+
       state_file = get_state_file(options)
       load_state(state_file)
 
-      render = ZabbixBulkRenderer.new(group: name)
       Salus.renders.clear
+      Salus.render(ZabbixBulkRenderer.new(group: group))
+      render = ZabbixCacheRenderer.new
       Salus.render(render)
       Salus.tick
+      cache  = render.data
 
       save_state(state_file)
+      save_cache(cache_file, cache)
     end
 
     private
