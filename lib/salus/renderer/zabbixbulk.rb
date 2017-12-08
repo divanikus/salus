@@ -7,10 +7,9 @@ module Salus
 
     def render(data)
       # Zabbix 3.4+ with preprocessor
-      root = @group.nil? ? data : data.fetch(@group, nil)
-      return if root.nil?
-      
-      iterate(root) do |name, metric|
+      iterate(data) do |name, metric|
+        next unless name.match(/^#{@group}\./)
+        name  = name.sub(/^#{@group}\./, '')
         name  = name.gsub(/\.\[/, '[')
         value = metric.value
         STDOUT.puts "#{name}\t#{value}" unless metric.timestamp.nil?

@@ -7,7 +7,10 @@ module Salus
 
     def render(data)
       iterate(data) do |name, metric|
-        value = metric.value.nil? ? "" : "%.#{@precision}f" % metric.value
+        value = metric.value
+        unless metric.is_a?(Salus::Text)
+          value = "%.#{@precision}f" % value unless value.nil?
+        end
         STDOUT.puts "[#{Time.at(metric.timestamp)}] #{name} - #{value}" unless metric.timestamp.nil?
       end
     end
