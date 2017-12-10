@@ -62,7 +62,7 @@ module Salus
       cache  = render.data
 
       if (cache.key?(name))
-        STDOUT.puts cache[name][:value]unless cache[name][:value].nil?
+        STDOUT.puts cache[name][:value] unless cache[name][:value].nil?
       end
 
       save_state(state_file)
@@ -91,7 +91,7 @@ module Salus
         keys.each do |key|
           name = key.sub(re, '')
           name = name.gsub(/\.\[/, '[')
-          result[name] = cache[key][:value] unless cache[key][:value].nil?
+          result[name] = cache[key][:value]
         end
         STDOUT.puts result.to_json
         return
