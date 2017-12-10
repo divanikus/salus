@@ -1,3 +1,4 @@
+require "json"
 require "salus/renderer/base"
 require "salus/renderer/block"
 require "salus/renderer/stdout"

@@ -87,11 +87,13 @@ module Salus
       re = /^#{Regexp.escape(group)}\./
       keys = cache.keys.grep(re)
       if !keys.empty? && (keys.reduce(true) { |x, v| x &= !expired?(cache[v], options) })
+        result = {}
         keys.each do |key|
           name = key.sub(re, '')
           name = name.gsub(/\.\[/, '[')
-          STDOUT.puts "#{name}\t#{cache[key][:value]}" unless cache[key][:value].nil?
+          result[name] = cache[key][:value] unless cache[key][:value].nil?
         end
+        STDOUT.puts result.to_json
         return
       end
 
