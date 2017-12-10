@@ -86,7 +86,7 @@ module Salus
 
     def load_state(&block)
       data = block.call
-      return if data.nil?
+      return unless data
       return if data.empty?
       data.each do |k, v|
         @@_groups[k].load(v) if @@_groups.key?(k)

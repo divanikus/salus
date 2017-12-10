@@ -103,7 +103,7 @@ module Salus
     end
 
     def load(data)
-      return if data.nil?
+      return unless data
       return if data.empty?
       synchronize do
         if data.key?(:defaults)
