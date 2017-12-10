@@ -43,6 +43,7 @@ module Salus
     end
 
     def load_state(file)
+      return unless file
       Salus.load_state do
         begin
           YAML.load(read_file(file)) if File.exists?(file)
@@ -53,6 +54,7 @@ module Salus
     end
 
     def save_state(file)
+      return unless file
       Salus.save_state do |data|
         begin
           write_file(file, data.to_yaml)

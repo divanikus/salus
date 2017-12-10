@@ -120,6 +120,7 @@ module Salus
     end
 
     def load_cache(file)
+      return {} unless file
       begin
         if File.exists?(file)
           YAML.load(read_file(file))
@@ -133,6 +134,7 @@ module Salus
     end
 
     def save_cache(file, data)
+      return unless file
       begin
         write_file(file, data.to_yaml)
       rescue Exception => e
