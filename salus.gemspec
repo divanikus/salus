@@ -6,6 +6,7 @@ require "salus/version"
 Gem::Specification.new do |spec|
   spec.name          = "salus"
   spec.version       = Salus::VERSION
+  spec.licenses      = ['BSD']
   spec.authors       = ["divanikus"]
   spec.email         = ["d1pro@yandex.ru"]
 
