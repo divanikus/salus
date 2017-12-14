@@ -231,6 +231,13 @@ $ salus zabbix parameter cpu.usage[cpu5] -f zabbix.salus && sleep 31 && salus za
 
 **NOTE!** You won't get the result on the first run, because cpu usage on Linux needs to get two points in time to be calculated. `zabbix` subcommand uses caching of the results, so you have to wait for 30 seconds to get next result. But if you'll wait for more than TTL (60 seconds), you'll get empty result again.
 
+New dependant items mode of Zabbix 3.4+ is also supported. Output is in JSON.
+
+```bash
+$ salus zabbix bulk cpu -f zabbix.salus
+{"usage[cpu0]":8.362702709145317,"usage[cpu1]":2.2395325673158424,"usage[cpu2]":3.570268951237728,"usage[cpu3]":4.641349636608478,"usage[cpu4]":3.7313418117547834,"usage[cpu5]":4.023359928822469,"usage[cpu6]":3.0834133549568365,"usage[cpu7]":4.47470699450407}
+```
+
 ## Development
 
 After checking out the repo, run `bin/setup` to install dependencies. Then, run `rake spec` to run the tests. You can also run `bin/console` for an interactive prompt that will allow you to experiment.
