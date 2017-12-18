@@ -39,7 +39,6 @@ module Salus
     method_option :debug, aliases: "-d", :type => :boolean, :default => false
     def parameter(name)
       Salus.logger.level = options[:debug] ? Logger::DEBUG : Logger::WARN
-
       load_files(get_files(options))
 
       cache_file = options.fetch(:cache,
@@ -74,24 +73,30 @@ module Salus
     method_option :file,  aliases: "-f", :type => :array,  desc: "File(s) with metrics' definition"
     method_option :state, aliases: "-s", :type => :string, desc: "State file location"
     method_option :debug, aliases: "-d", :type => :boolean, :default => false
-    def bulk(group)
+    def bulk(group=nil)
       Salus.logger.level = options[:debug] ? Logger::DEBUG : Logger::WARN
-
       load_files(get_files(options))
 
       cache_file = options.fetch(:cache,
-        Salus.vars.fetch(:zabbix_cache_file,
+        Salus.var(:zabbix_cache_file,
           File.join(Dir.pwd, ZABBIX_CACHE_FILE)))
       cache  = load_cache(cache_file)
 
-      re = /^#{Regexp.escape(group)}\./
+      re = group.nil? ? // : /^#{Regexp.escape(group)}\./
       keys = cache.keys.grep(re)
       if !keys.empty? && (keys.reduce(true) { |x, v| x &= !expired?(cache[v], options) })
         result = {}
         keys.each do |key|
           name = key.sub(re, '')
           name = name.gsub(/\.\[/, '[')
-          result[name] = cache[key][:value]
+
+          parts = name.split(/\./)
+          node  = result
+          parts[0...-1].each do |part|
+            node[part] = {} unless node.key?(part)
+            node = node[part]
+          end
+          node[parts.last] = cache[key][:value]
         end
         STDOUT.puts result.to_json
         return

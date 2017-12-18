@@ -23,15 +23,14 @@ module Salus
 
     Metric.descendants.each do |m|
       sym = m.name.split('::').last.downcase.to_sym
-      define_method(sym) do |*args, &blk|
-        title = args.select { |x| x.is_a?(String) }.first
-        raise ArgumentError, "Metric needs a name!" if title.nil?
+      define_method(sym) do |title, args={}, &blk|
+        raise ArgumentError, "Metric needs a name!" if title.nil? or !title.is_a?(String)
 
         unless @_metrics.key?(title)
           @_metrics[title] = m.new(@_opts)
         end
 
-        @_metrics[title].push(*args, &blk)
+        @_metrics[title].push(args, &blk)
       end
     end
 
@@ -39,9 +38,12 @@ module Salus
       Salus.on_win?
     end
 
-    def default(*args)
-      opts   = args.select { |x| x.is_a?(Hash) }.first
-      opts ||= {}
+    def var(arg, default=nil, &block)
+      Salus.var(arg, default, &block)
+    end
+
+    def default(opts)
+      return unless opts.is_a?(Hash)
       opts.each do |k, v|
         next if [:value, :timestamp].include?(k)
         @_opts[k] = v

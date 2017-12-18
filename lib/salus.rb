@@ -14,6 +14,7 @@ module Salus
     @@_renders= []
     @@_opts   = {}
     @@_vars   = {}
+    @@_lazy   = []
 
     def on_win?
       @@_win ||= !(RUBY_PLATFORM =~ /bccwin|cygwin|djgpp|mingw|mswin|wince/i).nil?
@@ -30,9 +31,8 @@ module Salus
     end
     alias root groups
 
-    def default(*args)
-      opts   = args.select { |x| x.is_a?(Hash) }.first
-      opts ||= {}
+    def default(opts)
+      return unless opts.is_a?(Hash)
       opts.each do |k, v|
         next if [:value, :timestamp].include?(k)
         @@_opts[k] = v
@@ -43,11 +43,22 @@ module Salus
       @@_opts
     end
 
-    def var(*args)
-      opts   = args.select { |x| x.is_a?(Hash) }.first
-      opts ||= {}
-      opts.each {|k, v| @@_vars[k] = v}
+    def var(arg, default=nil, &block)
+      if arg.is_a?(Hash)
+        arg.each {|k, v| @@_vars[k] = v}
+      elsif block_given?
+        @@_vars[arg.to_sym] = block
+      else
+        value = @@_vars.fetch(arg.to_sym, default)
+        # Dumb lazy loading
+        if value.is_a?(Proc)
+          value = value.call
+          @@_vars[arg.to_sym] = value
+        end
+        value
+      end
     end
+    alias let var
 
     def vars
       @@_vars
@@ -74,10 +85,23 @@ module Salus
       @@_renders = []
       @@_opts    = {}
       @@_vars    = {}
+      @@_lazy    = []
       if defined?(@@_pool) && @@_pool.is_a?(Salus::ThreadPool)
         @@_pool.shutdown!
         @@_pool = nil
       end
+    end
+
+    def lazy(&block)
+      raise ArgumentError, "Block should be given" unless block_given?
+      @@_lazy << block
+    end
+
+    def lazy_eval
+      # Lazy eval blocks once
+      return if @@_lazy.empty?
+      @@_lazy.each { |block| instance_eval(&block) }
+      @@_lazy.clear
     end
 
     def load(file)
@@ -88,6 +112,7 @@ module Salus
       data = block.call
       return unless data
       return if data.empty?
+      lazy_eval
       data.each do |k, v|
         @@_groups[k].load(v) if @@_groups.key?(k)
       end
@@ -100,6 +125,7 @@ module Salus
     end
 
     def tick
+      lazy_eval
       return if @@_groups.empty?
       pause = (Salus.interval - Salus.tick_timeout - Salus.render_timeout) / 2
       pause = 1 if (pause <= 0)

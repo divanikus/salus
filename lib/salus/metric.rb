@@ -58,9 +58,8 @@ module Salus
       synchronize { @opts[:mute] || false }
     end
 
-    def push(*args, &block)
-      opts   = args.select { |x| x.is_a?(Hash) }.first
-      opts ||= {}
+    def push(opts={}, &block)
+      opts = {} unless opts.is_a?(Hash)
 
       synchronize do
         opts.each do |k, v|
