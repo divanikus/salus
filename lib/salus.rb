@@ -52,8 +52,12 @@ module Salus
         value = @@_vars.fetch(arg.to_sym, default)
         # Dumb lazy loading
         if value.is_a?(Proc)
-          value = value.call
-          @@_vars[arg.to_sym] = value
+          begin
+            value = value.call
+            @@_vars[arg.to_sym] = value
+          rescue
+            @@_vars[arg.to_sym] = default
+          end
         end
         value
       end
