@@ -16,6 +16,7 @@ module Salus
   end
 
   class Metric
+    include Logging
     include Lockable
     STORAGE_DEPTH = 2
 
@@ -70,7 +71,8 @@ module Salus
         if block_given?
           v = begin
             yield
-          rescue
+          rescue Exception => e
+            log DEBUG, e
             nil
           end
           validate(:value, v)

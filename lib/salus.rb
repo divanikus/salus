@@ -54,7 +54,8 @@ module Salus
         @@_vars[arg.to_sym] = if value.is_a?(Proc)
           begin
             value = value.call
-          rescue
+          rescue Exception => e
+            log DEBUG, e
             value = default
           end
         end

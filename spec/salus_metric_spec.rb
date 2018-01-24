@@ -53,7 +53,7 @@ RSpec.describe Salus::Metric do
       expect(metric.value).to eq(10)
     end
 
-    it "mutes block errors" do
+    it "returns nil on block errors" do
       metric.push do
         10 / nil
       end
@@ -66,7 +66,7 @@ RSpec.describe Salus::Metric do
 
     it "stores ttl" do
       metric.push timestamp: 1000, ttl: 10
-      expect(metric.ttl).to eq(10)      
+      expect(metric.ttl).to eq(10)
     end
 
     it "expires" do
