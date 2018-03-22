@@ -1,6 +1,6 @@
 module Salus
   module Configuration
-    # An array of valid keys in the options hash when configuring a Gitlab::API.
+    # An array of valid keys in the options hash when configuring Salus.
     VALID_OPTIONS_KEYS = %i(min_threads max_threads interval tick_timeout render_timeout logger).freeze
 
     # @private
