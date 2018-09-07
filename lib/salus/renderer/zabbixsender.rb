@@ -10,7 +10,7 @@ module Salus
             name  = name.gsub(/\.\[/, '[')
             value = metric.value
             value = '""' if value.nil?
-            value = value.dump if (!value.nil? && metric.is_a?(Salus::Text))
+            value = value.to_json if (!value.nil? && metric.is_a?(Salus::Text))
 
             result[timestamp] = [] unless result.key?(timestamp)
             result[timestamp] << "#{hostname.dump} #{name} #{timestamp} #{value}"
