@@ -8,6 +8,7 @@ module Salus
           unless metric.timestamp.nil?
             timestamp = metric.timestamp.to_i
             name  = name.gsub(/\.\[/, '[')
+            name  = name.to_json if (name.match(/\s/))
             value = metric.value
             value = '""' if value.nil?
             value = value.to_json if (!value.nil? && metric.is_a?(Salus::Text))
