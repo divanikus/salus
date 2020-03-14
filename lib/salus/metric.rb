@@ -144,6 +144,15 @@ module Salus
       end
     end
 
+    def clear
+      synchronize do
+        @last_calced_value = nil
+        @last_calced_ts    = nil
+        @needs_update      = true
+        @values.clear
+      end
+    end
+
     protected
     def option(key, *types)
       @attributes[key] = types

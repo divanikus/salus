@@ -46,6 +46,16 @@ RSpec.describe Salus::Metric do
       expect(metric.value).to eq(30)
     end
 
+    it "clears values" do
+      metric.push value: 10
+      expect(metric.value).to eq(10)
+      metric.push value: 20
+      expect(metric.value).to eq(20)
+      metric.clear
+      expect(metric.value).to eq(nil)
+      expect(metric.timestamp).to eq(nil)
+    end
+
     it "takes block" do
       metric.push do
         100 / 10

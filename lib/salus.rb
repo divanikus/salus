@@ -129,11 +129,13 @@ module Salus
     end
 
     def tick
+      log DEBUG, "Tick..."
       lazy_eval
       return if @@_groups.empty?
       pause = (Salus.interval - Salus.tick_timeout - Salus.render_timeout) / 2
       pause = 1 if (pause <= 0)
 
+      log DEBUG, "Starting collection. Top-level groups to spawn: #{@@_groups.count}"
       latch = CountDownLatch.new(@@_groups.count)
       @@_groups.each do |k, v|
         pool.process do
@@ -150,6 +152,7 @@ module Salus
       log DEBUG, "Collection finished. Threads: #{pool.spawned} spawned, #{pool.waiting} waiting, #{Thread.list.count} total"
 
       return if @@_renders.empty?
+      log DEBUG, "Starting #{@_renders.count} renderers"
       latch = CountDownLatch.new(@@_renders.count)
       @@_renders.each do |v|
         pool.process do
