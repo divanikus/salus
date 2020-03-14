@@ -152,7 +152,7 @@ module Salus
       log DEBUG, "Collection finished. Threads: #{pool.spawned} spawned, #{pool.waiting} waiting, #{Thread.list.count} total"
 
       return if @@_renders.empty?
-      log DEBUG, "Starting #{@_renders.count} renderers"
+      log DEBUG, "Starting #{@@_renders.count} renderers"
       latch = CountDownLatch.new(@@_renders.count)
       @@_renders.each do |v|
         pool.process do
